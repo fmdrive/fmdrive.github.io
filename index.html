@@ -1,48 +1,609 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FM-Drive</title>
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #ffffff;
-            font-family: Georgia, "Times New Roman", serif;
-            text-align: center;
-        }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>
+      FM-Drive: Continuous Trajectory Generation without Data-Informed Priors via Flow Matching over
+      Bernstein Coefficients for End-to-End Autonomous Driving
+    </title>
+    <meta
+      name="description"
+      content="FM-Drive is a conditional flow-matching planner that generates Bernstein polynomial coefficients from a standard Gaussian source, reaching 90.04 EPDMS on NAVSIMv2 navtest with camera-only input."
+    />
+    <meta name="author" content="Anonymous" />
+    <meta name="robots" content="noindex" />
+    <meta property="og:title" content="FM-Drive" />
+    <meta
+      property="og:description"
+      content="FM-Drive is a conditional flow-matching planner that generates Bernstein polynomial coefficients from a standard Gaussian source, reaching 90.04 EPDMS on NAVSIMv2 navtest with camera-only input."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#e3e9f3" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%234f7fcc'/%3E%3Cpath d='M7 22c5 0 6-12 11-12 3 0 4 3 7 3' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="preload" as="image" href="assets/fig/teaser.webp" fetchpriority="high" />
+    <link rel="stylesheet" href="assets/css/site.css?v=de468844" />
+  </head>
+  <body>
+    <nav class="top">
+      <div class="in">
+        <a class="brand" href="index.html">FM-Drive</a>
+        <div class="links">
+          <a class="l" href="#method">Method</a>
+          <a class="l" href="#results">Results</a>
+          <a class="l" href="#qualitative">Qualitative</a>
+          <a class="l hide-s" href="#nuscenes">nuScenes</a>
+          <a class="l hide-s" href="#goal">Goal</a>
+          <a class="l" href="more.html">More results</a>
+        </div>
+      </div>
+    </nav>
+    <header class="hero wrap" id="top">
+      <h1>
+        <span class="nm">FM-Drive</span>: Continuous Trajectory Generation without Data-Informed
+        Priors via Flow Matching over Bernstein Coefficients for End-to-End Autonomous Driving
+      </h1>
+      <p class="affil">Under Review</p>
+      <div class="btns">
+        <a class="btn primary" href="assets/paper.pdf">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+            <path d="M14 3v5h5M9 13h6M9 17h4" />
+          </svg>
+          Paper (PDF)
+        </a>
+        <a class="btn" href="#qualitative">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="4" width="18" height="16" rx="3" />
+            <path d="m10 9 5 3-5 3z" />
+          </svg>
+          Qualitative results
+        </a>
+      </div>
+      <p class="tldr">
+        <b>TL;DR</b>&nbsp; Flow matching directly over Bernstein coefficients, from a standard
+        Gaussian source with no anchors or mixture priors,
+        <b>reaches 90.04 EPDMS on NAVSIMv2 navtest</b> using camera-only input.
+      </p>
+      <figure class="glass fig">
+        <div class="img wide">
+          <img
+            src="assets/fig/teaser.webp"
+            width="2000"
+            height="666"
+            alt="FM-Drive versus MeanFuser trajectory candidates in six NAVSIMv2 scenes (A to F)"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </div>
+        <figcaption>
+          <b>Figure 1.</b> Qualitative comparison of FM-Drive against MeanFuser on the NAVSIMv2
+          open-loop benchmark. In each panel, red candidates denote the trajectory proposals, green
+          the final aggregated trajectory passed to the controller, and black the expert log.
+          MeanFuser's candidates fan off the drivable corridor in a roundabout <b>(A)</b>, cut into
+          parked and leading vehicles in halted dense traffic <b>(B, C)</b>, spread across
+          infeasible headings at turns <b>(D, E)</b>, and predict brief corridor exits at a complete
+          halt among pedestrians <b>(F)</b>. FM-Drive's candidates already cluster around the
+          feasible maneuver in every panel.
+        </figcaption>
+      </figure>
+    </header>
 
-        .container {
-            width: min(1200px, 92%);
-        }
+    <section id="abstract">
+      <div class="wrap">
+        <h2>Abstract</h2>
+        <div class="glass abstract">
+          <p>
+            Learning-based trajectory planners for autonomous driving increasingly adopt diffusion
+            or flow-matching formulations to model multimodal, temporally consistent action
+            sequences. However, trajectories represented as discrete waypoints can exhibit
+            temporally inconsistent and non-smooth motion.
+            <b
+              >Top-performing baselines sidestep this by initializing the source distribution from a
+              data-informed prior, such as clustered anchors or a Gaussian mixture fitted to the
+              expert trajectory distribution, so that the model only has to correct a small
+              perturbation around an already expert-like mode.</b
+            >
+            While they may promote smooth trajectories, the generative process becomes biased toward
+            modes captured by the expert-derived prior, making generation dependent on its coverage.
+          </p>
+          <p>
+            We propose <b>FM-Drive</b>, a conditional flow-matching planner that generates Bernstein
+            polynomial coefficients conditioned on image-based scene context without using expert
+            data in the form of anchors or mixture priors to construct its source distribution.
+            <b
+              >The Bernstein parameterization ensures that every intermediate flow state decodes to
+              a continuous, differentiable trajectory, enabling trajectory-level regularization
+              throughout generation.</b
+            >
+            We exploit this property during training through a jerk-based loss at intermediate
+            states via endpoint reconstruction.
+          </p>
+          <p>
+            FM-Drive further employs a DiT-based backbone with the proposed joint-attention
+            mechanism to condition the evolving trajectory state on perspective and bird's-eye-view
+            features obtained from multi-view camera-only observations.
+            <b
+              >On NAVSIMv2 open-loop benchmark, FM-Drive achieves an EPDMS of 90.04, outperforming
+              strong generative baselines without relying on data-informed structured priors.</b
+            >
+          </p>
+        </div>
+      </div>
+    </section>
 
-        h1 {
-            margin: 0;
-            font-size: clamp(28px, 3.2vw, 52px);
-            line-height: 1.15;
-            font-weight: 700;
-        }
+    <section id="method">
+      <div class="wrap">
+        <h2>Method</h2>
+        <p class="lede">
+          A single Bernstein polynomial describes the entire planning horizon, so trajectory states
+          and their derivatives are analytic and every flow state decodes to a valid curve.
+        </p>
+        <div class="glass fig2card">
+          <figure class="f2">
+            <div class="img">
+              <img
+                loading="lazy"
+                decoding="async"
+                src="assets/fig/interpolation.webp"
+                width="1778"
+                height="1816"
+                alt="Source-to-target interpolation for waypoints, DiffusionDrive, MeanFuser and Bernstein representations"
+              />
+            </div>
+          </figure>
+          <div class="f2side">
+            <p class="cap">
+              <b>Figure 2.</b> Source-to-target interpolation under different trajectory
+              representations. <b>Waypoints</b> from an isotropic Gaussian prior give non-smooth,
+              self-intersecting intermediate states. <b>DiffusionDrive</b> and
+              <b>MeanFuser</b> initialize from data-informed priors (dashed). <b>Ours</b> starts
+              from the same uninformed isotropic prior as Waypoints, yet every intermediate state is
+              a smooth curve by construction.
+            </p>
+            <h3>Output representation</h3>
+            <p>
+              Discrete waypoints carry no notion of trajectory geometry. However, Bernstein
+              polynomial continuous time representations are smooth by construction and support
+              higher-order derivatives without any worry about the temporal resolution used in
+              training.
+            </p>
+            <div class="anim" style="--ar: 1430/396">
+              <video
+                class="lazyvid"
+                muted
+                loop
+                playsinline
+                preload="none"
+                poster="assets/anim/flow_bernstein_anim_single.webp"
+                data-src="assets/anim/flow_bernstein_anim_single.mp4"
+              ></video>
+            </div>
+            <p class="cap2">
+              Control points (red) are transported from noise to the expert target while the
+              Bernstein curve (blue) remains smooth, ultimately smoother waypoints.
+            </p>
+          </div>
+        </div>
+        <div style="height: 16px"></div>
+        <figure class="glass fig">
+          <div class="img wide">
+            <img
+              loading="lazy"
+              decoding="async"
+              src="assets/fig/architecture.webp"
+              width="2400"
+              height="1554"
+              alt="FM-Drive architecture"
+            />
+          </div>
+          <figcaption>
+            <b>Figure 3. FM-Drive architecture.</b> A conditional flow-matching framework generates
+            scene-conditioned trajectory hypotheses parameterized as Bernstein control points.
+            Frozen camera-only backbones yield image and BEV token sets; ego status and route intent
+            (command and goal) are pooled with the flow-time embedding into a global context that
+            drives AdaLN modulation. Across DiT blocks, the trajectory tokens and subsequently the
+            flow become condition-aware via joint attention. At inference, the predicted flow is
+            integrated for K steps and mapped through the Bernstein basis to obtain the trajectory.
+          </figcaption>
+        </figure>
+        <h4 class="sub">Inference loop</h4>
+        <div id="stepper" class="glass text-card" style="padding: clamp(14px, 2.2vw, 24px)">
+          <div class="steps" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected="true"
+              data-src="assets/anim/step1_predicted_flow.mp4"
+              data-poster="assets/anim/step1_predicted_flow.webp"
+              data-title="Predicted flow"
+              data-desc="The DiT reads the scene (image and BEV tokens, ego status, command and goal) and predicts flow for every Bernstein control point."
+              data-ar="660/420"
+            >
+              <b>1</b>Predicted flow
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected="false"
+              data-src="assets/anim/step2_euler_integration.mp4"
+              data-poster="assets/anim/step2_euler_integration.webp"
+              data-title="Euler integration"
+              data-desc="Starting from isotropic Gaussian noise, the control points are integrated along the predicted flow for K = 10 stochastic Euler steps."
+              data-ar="660/363"
+            >
+              <b>2</b>Euler integration
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected="false"
+              data-src="assets/anim/step3_predicted_control_points.mp4"
+              data-poster="assets/anim/step3_predicted_control_points.webp"
+              data-title="Control points"
+              data-desc="The integrated state is the final set of Bernstein control points for one sampled trajectory."
+              data-ar="660/366"
+            >
+              <b>3</b>Control points
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected="false"
+              data-src="assets/anim/step4_construct_waypoints.mp4"
+              data-poster="assets/anim/step4_construct_waypoints.webp"
+              data-title="Waypoints"
+              data-desc="Evaluating the Bernstein basis turns the control points into a continuous, differentiable trajectory at any query time."
+              data-ar="660/366"
+            >
+              <b>4</b>Waypoints
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected="false"
+              data-src="assets/anim/step5_output_trajectories.mp4"
+              data-poster="assets/anim/step5_output_trajectories.webp"
+              data-title="Candidates"
+              data-desc="Repeating with different noise samples gives a candidate set, which ARM aggregates into the single trajectory sent to the controller."
+              data-ar="660/510"
+            >
+              <b>5</b>Candidates
+            </button>
+          </div>
+          <div
+            class="two"
+            style="grid-template-columns: 1.1fr 0.9fr; gap: 22px; align-items: center"
+          >
+            <div class="anim" id="stepbox" style="--ar: 660/420">
+              <video
+                muted
+                loop
+                playsinline
+                preload="none"
+                poster="assets/anim/step1_predicted_flow.webp"
+                data-src="assets/anim/step1_predicted_flow.mp4"
+                class="lazyvid"
+              ></video>
+            </div>
+            <div class="tt">
+              <h3 id="steptitle">Predicted flow</h3>
+              <p id="stepdesc" style="color: var(--ink2); margin: 10px 0 0">
+                The DiT reads the scene (image and BEV tokens, ego status, command and goal) and
+                predicts flow for every Bernstein control point.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        .coming-soon {
-            margin-top: 45px;
-            font-size: clamp(24px, 2.5vw, 40px);
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-    <main class="container">
-        <h1>
-            FM-Drive: Continuous Trajectory Generation without Data-Informed
-            Priors via Flow Matching over Bernstein Coefficients
-            for End-to-End Autonomous Driving
-        </h1>
+    <section id="results">
+      <div class="wrap">
+        <h2>Quantitative Results</h2>
+        <p class="lede">
+          On NAVSIMv2 navtest, FM-Drive improves over DiffusionDrive and MeanFuser without any
+          expert-derived source prior, and is the strongest learned planner on NC, DDC, TLC, TTC and
+          LK. Most of the gain arises before aggregation, from the Bernstein representation and the
+          jerk regularization.
+        </p>
+        <div class="tables">
+          <div class="glass tw">
+            <table>
+              <caption>
+                <b>Table I.</b>
+                NAVSIMv2 navtest. * is our evaluation of the official checkpoint. Bold is the best
+                learned-planner result; Human Agent is an expert reference.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Method</th>
+                  <th scope="col">NC↑</th>
+                  <th scope="col">DAC↑</th>
+                  <th scope="col">DDC↑</th>
+                  <th scope="col">TLC↑</th>
+                  <th scope="col">EP↑</th>
+                  <th scope="col">TTC↑</th>
+                  <th scope="col">LK↑</th>
+                  <th scope="col">HC↑</th>
+                  <th scope="col">EC↑</th>
+                  <th scope="col">EPDMS↑</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="ref">
+                  <td>Human Agent</td>
+                  <td>100.0</td>
+                  <td>100.0</td>
+                  <td>99.8</td>
+                  <td>100.0</td>
+                  <td>87.4</td>
+                  <td>100.0</td>
+                  <td>100.0</td>
+                  <td>98.1</td>
+                  <td>90.1</td>
+                  <td>90.3</td>
+                </tr>
+                <tr class="sep">
+                  <td colspan="11"></td>
+                </tr>
+                <tr class="">
+                  <td>Ego Status MLP</td>
+                  <td>93.1</td>
+                  <td>77.9</td>
+                  <td>92.7</td>
+                  <td>99.6</td>
+                  <td>86.0</td>
+                  <td>91.5</td>
+                  <td>89.4</td>
+                  <td class="b">98.3</td>
+                  <td>85.4</td>
+                  <td>64.0</td>
+                </tr>
+                <tr class="">
+                  <td>TransFuser</td>
+                  <td>96.9</td>
+                  <td>89.9</td>
+                  <td>97.8</td>
+                  <td>99.7</td>
+                  <td>87.1</td>
+                  <td>95.4</td>
+                  <td>92.7</td>
+                  <td class="b">98.3</td>
+                  <td>87.2</td>
+                  <td>76.7</td>
+                </tr>
+                <tr class="">
+                  <td>Hydra-MDP++</td>
+                  <td>97.2</td>
+                  <td class="b">97.5</td>
+                  <td>99.4</td>
+                  <td>99.6</td>
+                  <td>83.1</td>
+                  <td>96.5</td>
+                  <td>94.4</td>
+                  <td>98.2</td>
+                  <td>70.9</td>
+                  <td>81.4</td>
+                </tr>
+                <tr class="">
+                  <td>DriveSuprim</td>
+                  <td>97.5</td>
+                  <td>96.5</td>
+                  <td>99.4</td>
+                  <td>99.6</td>
+                  <td class="b">88.4</td>
+                  <td>96.6</td>
+                  <td>95.5</td>
+                  <td class="b">98.3</td>
+                  <td>77.0</td>
+                  <td>83.1</td>
+                </tr>
+                <tr class="">
+                  <td>PRIX</td>
+                  <td>98.0</td>
+                  <td>95.6</td>
+                  <td>99.5</td>
+                  <td>99.8</td>
+                  <td>87.4</td>
+                  <td>97.2</td>
+                  <td>97.1</td>
+                  <td class="b">98.3</td>
+                  <td>87.6</td>
+                  <td>84.2</td>
+                </tr>
+                <tr class="">
+                  <td>DiffusionDrive*</td>
+                  <td>98.2</td>
+                  <td>96.3</td>
+                  <td>99.4</td>
+                  <td>99.8</td>
+                  <td>87.4</td>
+                  <td>97.4</td>
+                  <td>97.0</td>
+                  <td class="b">98.3</td>
+                  <td>87.7</td>
+                  <td>88.1</td>
+                </tr>
+                <tr class="">
+                  <td>MeanFuser*</td>
+                  <td>98.3</td>
+                  <td>97.2</td>
+                  <td>99.6</td>
+                  <td>99.8</td>
+                  <td>87.6</td>
+                  <td>97.4</td>
+                  <td>97.3</td>
+                  <td class="b">98.3</td>
+                  <td class="b">88.2</td>
+                  <td>89.1</td>
+                </tr>
+                <tr class="ours">
+                  <td>FM-Drive (Ours)</td>
+                  <td class="b">99.4</td>
+                  <td>96.7</td>
+                  <td class="b">99.8</td>
+                  <td class="b">99.9</td>
+                  <td>87.3</td>
+                  <td class="b">98.6</td>
+                  <td class="b">98.3</td>
+                  <td>98.2</td>
+                  <td>87.9</td>
+                  <td class="b">90.04</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="glass tw">
+            <table style="min-width: 560px">
+              <caption>
+                <b>Table II.</b>
+                Component ablation and ADE-oracle candidate-set analysis. The ADE Oracle rows pick
+                the generated candidate closest to the logged expert, using privileged information.
+                <b>Base represents FM-Drive model architecture without Bernstein.</b>
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Model</th>
+                  <th scope="col">Components</th>
+                  <th scope="col">N<sub>cand</sub></th>
+                  <th scope="col">CL-Proxy↑</th>
+                  <th scope="col">EPDMS↑</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="">
+                  <td rowspan="2" class="grp">Baselines</td>
+                  <td>DiffusionDrive</td>
+                  <td>20</td>
+                  <td>82.6</td>
+                  <td class="">88.1</td>
+                </tr>
+                <tr class="">
+                  <td>MeanFuser</td>
+                  <td>8</td>
+                  <td>83.7</td>
+                  <td class="">89.1</td>
+                </tr>
+                <tr class="sep">
+                  <td colspan="5"></td>
+                </tr>
+                <tr class="">
+                  <td>M0</td>
+                  <td class="dim">Base + Waypoints</td>
+                  <td>8</td>
+                  <td>–</td>
+                  <td class="">72.0</td>
+                </tr>
+                <tr class="">
+                  <td>M1</td>
+                  <td class="dim">Base + Bernstein</td>
+                  <td>8</td>
+                  <td>77.0</td>
+                  <td class="">83.2</td>
+                </tr>
+                <tr class="">
+                  <td>M2</td>
+                  <td class="dim">M1 + Jerk loss</td>
+                  <td>8</td>
+                  <td>82.8</td>
+                  <td class="">89.6</td>
+                </tr>
+                <tr class="ours">
+                  <td>M3 (FM-Drive)</td>
+                  <td class="dim">M2 + ARM</td>
+                  <td>8</td>
+                  <td>84.0</td>
+                  <td class="b">90.04</td>
+                </tr>
+                <tr class="sep">
+                  <td colspan="5"></td>
+                </tr>
+                <tr class="ref">
+                  <td rowspan="3" class="grp dim">ADE Oracle</td>
+                  <td class="dim">M2 + ADE</td>
+                  <td>8</td>
+                  <td>84.6</td>
+                  <td class="">90.8</td>
+                </tr>
+                <tr class="ref">
+                  <td class="dim">DiffusionDrive + ADE</td>
+                  <td>20</td>
+                  <td>83.4</td>
+                  <td class="">89.1</td>
+                </tr>
+                <tr class="ref">
+                  <td class="dim">MeanFuser + ADE</td>
+                  <td>8</td>
+                  <td>84.4</td>
+                  <td class="">89.6</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <div class="coming-soon">Coming Soon!</div>
-    </main>
-</body>
+    <section id="qualitative">
+      <div class="wrap">
+        <h2>Qualitative Results on NAVSIM</h2>
+        <p class="lede">
+          Each clip shows the front camera (top) and the bird's-eye view (bottom) for three methods.
+          Select a category, then a clip. More clips are on the
+          <a href="more.html">additional results page</a>.
+        </p>
+        <div class="viewer" data-sections="turns,agents,obstacles,lanes,robust" data-cols="3"></div>
+      </div>
+    </section>
+
+    <section id="nuscenes">
+      <div class="wrap">
+        <h2>Zero-Shot Transfer to nuScenes</h2>
+        <p class="lede">The NAVSIM-trained models are run on nuScenes without any fine-tuning.</p>
+        <div class="viewer" data-sections="nusc" data-cols="3"></div>
+      </div>
+    </section>
+
+    <section id="goal">
+      <div class="wrap">
+        <h2>Goal Conditioning as Optional Modality</h2>
+        <p class="lede">
+          The route goal is an optional input. Without it, the Gaussian-initialised candidate set
+          stays multimodal across the feasible maneuvers while still retaining a solution close to
+          the ground-truth trajectory. Each clip compares FM-Drive with the route goal and FM-Drive
+          without it.
+        </p>
+        <div class="viewer" data-sections="goal" data-cols="2"></div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <p>Under review.</p>
+        <p>
+          Page design inspired by <a href="https://nerfies.github.io">Nerfies</a> (CC BY-SA 4.0).
+        </p>
+      </div>
+    </footer>
+    <script src="assets/js/clips.js?v=de468844" defer></script>
+    <script src="assets/js/site.js?v=de468844" defer></script>
+  </body>
 </html>

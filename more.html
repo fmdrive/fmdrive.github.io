@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>More results · FM-Drive</title>
+    <meta
+      name="description"
+      content="All additional qualitative clips for FM-Drive on NAVSIM navtest."
+    />
+    <meta name="author" content="Anonymous" />
+    <meta name="robots" content="noindex" />
+    <meta property="og:title" content="FM-Drive" />
+    <meta
+      property="og:description"
+      content="All additional qualitative clips for FM-Drive on NAVSIM navtest."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#e3e9f3" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%234f7fcc'/%3E%3Cpath d='M7 22c5 0 6-12 11-12 3 0 4 3 7 3' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="assets/css/site.css?v=de468844" />
+  </head>
+  <body>
+    <nav class="top">
+      <div class="in">
+        <a class="brand" href="index.html">FM-Drive</a>
+        <div class="links"><a class="l" href="index.html">&larr; Back to Homepage</a></div>
+      </div>
+    </nav>
+    <header class="wrap" style="padding-top: clamp(26px, 4vw, 40px)">
+      <h1
+        style="
+          font-size: clamp(28px, 4vw, 38px);
+          font-weight: 650;
+          letter-spacing: -0.018em;
+          margin: 0 0 12px;
+        "
+      >
+        Additional Qualitative Results
+      </h1>
+      <p class="lede">
+        Clips beyond the curated set on the main page, grouped by scenario. Open a category to
+        browse its clips. Legend: in the BEV, black is the expert, green the candidates and red the
+        executed trajectory; in the camera view, candidates are red and the executed trajectory is
+        green.
+      </p>
+      <div class="tools">
+        <button class="btn" type="button" data-acc="open">Expand all</button>
+        <button class="btn" type="button" data-acc="close">Collapse all</button>
+      </div>
+    </header>
+    <main class="wrap" style="padding-bottom: 30px">
+      <details class="glass acc" open>
+        <summary>
+          <span class="t">Intersections &amp; Routes</span>
+          <span class="cnt2">10 clips</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="accbody">
+          <p class="secdesc">
+            Left and right turns, unprotected turns, roundabouts and U-turns where the route goal
+            matters.
+          </p>
+          <div class="viewer" data-sections="turns" data-more="1" data-cols="3"></div>
+        </div>
+      </details>
+      <details class="glass acc">
+        <summary>
+          <span class="t">Pedestrians</span>
+          <span class="cnt2">6 clips</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="accbody">
+          <p class="secdesc">
+            Pedestrian crossings, plus merging and cutting-in vehicles, yielding and heavy vehicles
+            ahead.
+          </p>
+          <div class="viewer" data-sections="agents" data-more="1" data-cols="3"></div>
+        </div>
+      </details>
+      <details class="glass acc">
+        <summary>
+          <span class="t">Obstacles &amp; Tight Spaces</span>
+          <span class="cnt2">8 clips</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="accbody">
+          <p class="secdesc">
+            Avoiding parked vehicles and clutter, and threading narrow corridors.
+          </p>
+          <div class="viewer" data-sections="obstacles" data-more="1" data-cols="3"></div>
+        </div>
+      </details>
+      <details class="glass acc">
+        <summary>
+          <span class="t">Lanes &amp; Speed</span>
+          <span class="cnt2">5 clips</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="accbody">
+          <p class="secdesc">
+            Lane changes, gradual slow-downs and holding at a halt in dense traffic.
+          </p>
+          <div class="viewer" data-sections="lanes" data-more="1" data-cols="3"></div>
+        </div>
+      </details>
+      <details class="glass acc">
+        <summary>
+          <span class="t">Robustness &amp; Long Tail</span>
+          <span class="cnt2">3 clips</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="accbody">
+          <p class="secdesc">
+            Extreme illumination changes and unusual scenes that are rare in the training data.
+          </p>
+          <div class="viewer" data-sections="robust" data-more="1" data-cols="3"></div>
+        </div>
+      </details>
+      <details class="glass acc">
+        <summary>
+          <span class="t">Goal Conditioning as Optional Modality</span>
+          <span class="cnt2">2 clips</span>
+          <span class="chev"></span>
+        </summary>
+        <div class="accbody">
+          <p class="secdesc">
+            The route goal is an optional input. Without it, the Gaussian-initialised candidate set
+            stays multimodal across the feasible maneuvers while still retaining a solution close to
+            the ground-truth trajectory.
+          </p>
+          <div class="viewer" data-sections="goal" data-more="1" data-cols="2"></div>
+        </div>
+      </details>
+    </main>
+    <footer>
+      <div class="wrap">
+        <p>Under review.</p>
+        <p>
+          Page design inspired by <a href="https://nerfies.github.io">Nerfies</a> (CC BY-SA 4.0).
+        </p>
+      </div>
+    </footer>
+    <script src="assets/js/clips.js?v=de468844" defer></script>
+    <script src="assets/js/site.js?v=de468844" defer></script>
+  </body>
+</html>

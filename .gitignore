@@ -1,0 +1,5 @@
+*.bk
+third_party
+tools/
+assets/submitted-artifacts/
+__pycache__/
