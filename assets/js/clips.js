@@ -42,7 +42,7 @@ window.CLIPS = {
     {"i": "obstacle-21-1", "s": "obstacles", "f": false, "t": "Obstacle avoidance IV", "c": "Steering around an obstacle."},
     {"i": "obstacle-21-3", "s": "obstacles", "f": false, "t": "Obstacle avoidance V", "c": "Steering around an obstacle."},
     {"i": "obstacle-21-4", "s": "obstacles", "f": false, "t": "Obstacle avoidance VI", "c": "Steering around an obstacle."},
-    {"i": "corridor-1", "s": "obstacles", "f": true, "t": "Corridor maneuvering", "c": "A narrow corridor. Baseline candidates extend beyond the drivable area; FM-Drive's follow the road geometry."},
+    {"i": "corridor-1", "s": "obstacles", "f": true, "t": "Corridor maneuvering", "c": "Baseline candidates extend beyond the drivable area; FM-Drive's follow the road geometry."},
     {"i": "corridor-2", "s": "obstacles", "f": false, "t": "Long corridor", "c": "A long drive through a narrow corridor (40 s)."},
     {"i": "aggressive-1", "s": "obstacles", "f": true, "t": "Aggressive maneuvering", "c": "A sharp, dynamic maneuver."},
     {"i": "aggressive-2", "s": "obstacles", "f": false, "t": "Aggressive maneuvering II", "c": "A sharp, dynamic maneuver."},

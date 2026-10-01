@@ -141,6 +141,17 @@ nav.top a.l:hover {
   border-color: var(--blue);
   text-decoration: none;
 }
+nav.top a.l.cta {
+  padding: 4px 14px;
+  border: 1.5px solid var(--blue);
+  border-radius: 999px;
+  color: var(--blue-d);
+  font-weight: 500;
+}
+nav.top a.l.cta:hover {
+  background: var(--blue);
+  color: #fff;
+}
 
 .hero {
   padding-top: clamp(34px, 5vw, 60px);
